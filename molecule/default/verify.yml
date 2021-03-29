@@ -3,5 +3,26 @@
 - name: Verify
   hosts: molecule_hosts
   gather_facts: no
+  become: yes
   tasks:
-    - debug: msg="Verify to be done"
+    - name: Get service facts
+      service_facts:
+
+    - name: Check directories
+      stat:
+        path: "{{ item }}"
+      register: check_dirs_result
+      loop:
+        - /var/www/html
+        - /mnt/www/html
+
+    - name: Verify migration was ok
+      assert:
+        that:
+          - ansible_facts.services["httpd.service"]["state"] == "running"
+          - >-
+            check_dirs_result.results
+            | selectattr("stat.exists", "equalto", true)
+            | selectattr("stat.isdir", "equalto", true)
+            | list
+            | length == 2

@@ -1,2 +1,173 @@
 ---
 # Role tasks
+
+- block:
+    - name: Check directories
+      stat:
+        path: "{{ migrate_to_mount_item.mount.path }}"
+      register: migrate_to_mount_check_dirs_result
+      loop: "{{ migrate_to_mount }}"
+      loop_control:
+        loop_var: migrate_to_mount_item
+        label: "{{ migrate_to_mount_item.mount.path }}"
+
+    - name: Check save directories
+      stat:
+        path: >-
+          {{ migrate_to_mount_item.mount.path
+             + "."
+             + migrate_to_mount_save_suffix }}
+      register:  migrate_to_mount_check_save_dirs_result
+      loop: "{{ migrate_to_mount }}"
+      loop_control:
+        loop_var: migrate_to_mount_item
+        label: "{{ migrate_to_mount_item.mount.path }}"
+
+    - name: Migrate directories
+      when: >-
+        migrate_to_mount_item.mount.path not in ansible_facts.mounts
+                                                | map(attribute="mount")
+                                                | list
+        or migrate_to_mount_check_save_dirs_result.results
+           [migrate_to_mount_index].stat.exists
+      block:
+        - name: Stop standard services
+          service:
+            name: "{{ migrate_to_mount_item.service.name }}"
+            state: stopped
+          register: migrate_to_mount_stop_result
+          failed_when:
+            - migrate_to_mount_stop_result.msg is defined
+            - migrate_to_mount_stop_result.msg is not search("Could not find")
+          loop: >-
+            {{ migrate_to_mount
+               | selectattr("service", "defined")
+               | selectattr("service.name", "defined")
+               | selectattr("service.stop_command", "undefined")
+               | list  }}
+          loop_control:
+            loop_var: migrate_to_mount_item
+            index_var: migrate_to_mount_index
+            label: >-
+              {{ migrate_to_mount_item.mount.path }}
+              {{ migrate_to_mount_item.service.name }}
+
+        - name: Stop services with external commands
+          command: "{{ migrate_to_mount_item.service.stop_command }}"
+          register: migrate_to_mount_stop_result
+          failed_when: >-
+            {{ migrate_to_mount_item.service.stop_command_failed_when }}
+          loop: >-
+            {{ migrate_to_mount
+               | selectattr("service", "defined")
+               | selectattr("service.stop_command", "defined")
+               | list  }}
+          loop_control:
+            loop_var: migrate_to_mount_item
+            index_var: migrate_to_mount_index
+            label: "{{ migrate_to_mount_item.mount.path }}"
+
+        - name: Save directories
+          command: >-
+            mv
+            {{ migrate_to_mount_item.mount.path }}
+            {{ migrate_to_mount_item.mount.path
+              + "."
+              + migrate_to_mount_save_suffix }}
+          when:
+            - >-
+              migrate_to_mount_check_dirs_result.results
+              [migrate_to_mount_index].stat.exists
+            - >-
+              not migrate_to_mount_check_save_dirs_result.results
+              [migrate_to_mount_index].stat.exists
+          register: migrate_to_mount_save_result
+          loop: "{{ migrate_to_mount }}"
+          loop_control:
+            loop_var: migrate_to_mount_item
+            index_var: migrate_to_mount_index
+            label: "{{ migrate_to_mount_item.mount.path }}"
+
+        - name: Mount directories
+          include_role:
+            name: amtega.mounts
+          loop: "{{ migrate_to_mount }}"
+          loop_control:
+            loop_var: migrate_to_mount_item
+            index_var: migrate_to_mount_index
+          vars:
+            mounts_load_from_hostvars: no
+            mounts:
+              - >-
+                {{ migrate_to_mount_item.mount
+                   | combine({"state": "mounted"}) }}
+            mounts_create_paths: yes
+
+        - name: Restore saved directories
+          shell: >-
+            shopt -s dotglob nullglob ; \
+            mv {{ migrate_to_mount_item.mount.path
+                  + "."
+                  + migrate_to_mount_save_suffix }}/* \
+            {{ migrate_to_mount_item.mount.path }}
+          args:
+            warn: no
+          when: >-
+            migrate_to_mount_save_result.results[migrate_to_mount_index]
+            is changed
+            or migrate_to_mount_check_save_dirs_result.results
+               [migrate_to_mount_index].stat.exists
+          loop: "{{ migrate_to_mount }}"
+          loop_control:
+            loop_var: migrate_to_mount_item
+            index_var: migrate_to_mount_index
+
+        - name: Remove saved directories
+          file:
+            path: >-
+              {{ migrate_to_mount_item.mount.path
+                 + "."
+                 + migrate_to_mount_save_suffix }}
+            state: absent
+          loop: "{{ migrate_to_mount }}"
+          loop_control:
+            loop_var: migrate_to_mount_item
+            index_var: migrate_to_mount_index
+
+        - name: Start standard services
+          service:
+            name: "{{ migrate_to_mount_item.service.name }}"
+            state: started
+          register: migrate_to_mount_start_result
+          failed_when:
+            - migrate_to_mount_start_result.msg is defined
+            - migrate_to_mount_start_result.msg is not search("Could not find")
+          loop: >-
+            {{ migrate_to_mount
+               | selectattr("service", "defined")
+               | selectattr("service.name", "defined")
+               | selectattr("service.start_command", "undefined")
+               | list  }}
+          loop_control:
+            loop_var: migrate_to_mount_item
+            index_var: migrate_to_mount_index
+            label: >-
+              {{ migrate_to_mount_item.mount.path }}
+              {{ migrate_to_mount_item.service.name }}
+
+        - name: Start services with external commands
+          command: "{{ migrate_to_mount_item.service.start_command }}"
+          register: migrate_to_mount_start_result
+          failed_when: >-
+            {{ migrate_to_mount_item.service.start_command_failed_when }}
+          loop: >-
+            {{ migrate_to_mount
+               | selectattr("service.sart_command", "defined")
+               | list  }}
+          loop_control:
+            loop_var: migrate_to_mount_item
+            index_var: migrate_to_mount_index
+            label: "{{ migrate_to_mount_item.mount.path }}"
+
+  tags:
+    - role::migrate_to_mount

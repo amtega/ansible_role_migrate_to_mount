@@ -1,2 +1,38 @@
 ---
 # Role default lower priority variables
+
+# List of dicts with the directories to migrate to mounts. The format of each
+# dictionary is the following:
+#
+# {
+#   mount: <mount>                      # Dict with the format described in role
+#                                       # amtega.mounts
+#   service:
+#     name: <name>                      # Name of the service to stop/start
+#                                       # (optional)
+#     start_command: <command>          # Start command. If not given standard
+#                                       # service management will be used
+#     start_command_failed_when: <bool> # Condition evaluable to bool to check
+#                                       # start command success (optional)
+#     stop_command: <command>           # Stop command. If not given standard
+#                                       # service management will be used
+#     stop_command_failed_when: <bool>  # Condition evaluable to bool to check
+#                                       # start command success (optional)
+# }
+#
+# For start_command_failed_when and stop_command_failed_when you can use
+# the variables migrate_to_mount_start_result and migrate_to_mount_stop_result
+
+migrate_to_mount: {}
+
+# Suffix to use during directory migration move tasks
+
+migrate_to_mount_save_suffix: save
+
+
+# Indicate `migrate_to_mount` must be loaded also from host variables. Any host
+# variable that begins with "migrate_to_mount_*" and contains the necessary
+# attributes will be loaded as an item to manage by the role. The variables must
+# follow the structure detailed before for `migrate_to_mount`
+
+migrate_to_mount_load_from_hostvars: no
