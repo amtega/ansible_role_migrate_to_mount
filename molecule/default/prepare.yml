@@ -4,4 +4,7 @@
   hosts: molecule_hosts
   gather_facts: no
   tasks:
-    - debug: msg="Preparation tasks"
+    - name: Install required packages
+      package:
+        name: httpd
+        state: present

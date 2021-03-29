@@ -1,23 +1,40 @@
----
 # Role dependencies
 
 galaxy_info:
-  role_name: role
-  author: author name
-  description: role description
+  role_name: mounts
+  author: Juan Antonio Valiño García
+  description: Manage migration from directory to mount point
   company: AMTEGA - Xunta de Galicia
   license: GPLv3 or EUPL
-  min_ansible_version: 2.9
+  min_ansible_version: 2.10
   platforms:
     - name: EL
       versions:
-        - 6
         - 7
         - 8
     - name: Fedora
       versions:
-        - 29
-        - 30
-  galaxy_tags: []
+        - 32
+        - 33
+  galaxy_tags:
+    - system
+    - mount
+    - directory
 
-dependencies: []
+dependencies:
+  - role: amtega.check_platform
+    vars:
+      check_platform_distributions:
+        centos: 7
+        fedora: 32
+        redhat: 7
+
+  - role: amtega.select_hostvars
+    vars:
+      select_hostvars_query:
+        pattern: "^migrate_to_mount_.*"
+        attributes:
+          - mount
+        fact_name: migrate_to_mount_hostvars
+        output_type: list
+    when: migrate_to_mount_load_from_hostvars | bool

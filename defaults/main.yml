@@ -1,2 +1,25 @@
 ---
 # Role default lower priority variables
+
+# migrate_to_mount_stop_result
+
+{
+  mount:
+  service:
+    name:
+    start_command:
+    start_command_failed_when:
+    stop_command:
+    stop_command_failed_when:
+
+}
+
+migrate_to_mount_save_suffix: save
+
+
+# Indicate `migrate_to_mount` must be loaded also from host variables. Any host
+# variable that begins with "migrate_to_mount_*" and contains the necessary
+# attributes will be loaded as an item to manage by the role. The variables must
+# follow the structure detailed before for `migrate_to_mount`
+
+migrate_to_mount_load_from_hostvars: no

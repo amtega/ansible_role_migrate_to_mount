@@ -6,12 +6,6 @@ driver:
   name: docker
 lint: "${MOLECULE_SCENARIO_DIRECTORY}/linters.sh"
 platforms:
-  - name: "centos6-${INSTANCE_UUID:-1}"
-    image: centos:6
-    groups:
-      - molecule_hosts
-      - molecule_hosts_centos
-      - molecule_hosts_centos_6
   - name: "centos7-${INSTANCE_UUID:-1}"
     image: centos:7
     groups:
@@ -46,6 +40,14 @@ provisioner:
     hosts:
       molecule_hosts:
         vars:
+          migrate_to_mount_load_from_hostvars: yes
+          migrate_to_mount:
+            - mount:
+                path: /var/lib/cobbler
+                src: /dev/mapper/vg--01-lv_varlibcobbler
+                fstype: bind
+              service:
+                name: httpd
       molecule_hosts_fedora:
         vars:
           ansible_python_interpreter: /usr/bin/python3
