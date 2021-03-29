@@ -3,29 +3,35 @@
 dependency:
   name: galaxy
 driver:
-  name: docker
+  name: vagrant
+  provider:
+    name: virtualbox
 lint: "${MOLECULE_SCENARIO_DIRECTORY}/linters.sh"
 platforms:
   - name: "centos7-${INSTANCE_UUID:-1}"
-    image: centos:7
+    box: centos/7
+    memory: 1024
     groups:
       - molecule_hosts
       - molecule_hosts_centos
       - molecule_hosts_centos_7
   - name: "centos8-${INSTANCE_UUID:-1}"
-    image: centos:8
+    box: centos/8
+    memory: 1024
     groups:
       - molecule_hosts
       - molecule_hosts_centos
       - molecule_hosts_centos_8
   - name: "fedora32-${INSTANCE_UUID:-1}"
-    image: fedora:32
+    box: fedora/32-cloud-base
+    memory: 1024
     groups:
       - molecule_hosts
       - molecule_hosts_fedora
       - molecule_hosts_fedora_32
   - name: "fedora33-${INSTANCE_UUID:-1}"
-    image: fedora:33
+    box: fedora/33-cloud-base
+    memory: 1024
     groups:
       - molecule_hosts
       - molecule_hosts_fedora
@@ -40,12 +46,12 @@ provisioner:
     hosts:
       molecule_hosts:
         vars:
-          migrate_to_mount_load_from_hostvars: yes
           migrate_to_mount:
             - mount:
-                path: /var/lib/cobbler
-                src: /dev/mapper/vg--01-lv_varlibcobbler
-                fstype: bind
+                path: /var/www
+                src: /mnt/www
+                opts: bind
+                fstype: none
               service:
                 name: httpd
       molecule_hosts_fedora:

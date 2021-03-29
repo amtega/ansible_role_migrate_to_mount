@@ -13,7 +13,10 @@
 
     - name: Check save directories
       stat:
-        path: "{{ tower_awx_postgres_data_dir }}.{{ migrate_to_mount_save_suffix }}"
+        path: >-
+          {{ migrate_to_mount_item.mount.path
+             + "."
+             + migrate_to_mount_save_suffix }}
       register:  migrate_to_mount_check_save_dirs_result
       loop: "{{ migrate_to_mount }}"
       loop_control:
@@ -25,7 +28,7 @@
         migrate_to_mount_item.mount.path not in ansible_facts.mounts
                                                 | map(attribute="mount")
                                                 | list
-        or migrate_to_mount_check_save_dirs_result
+        or migrate_to_mount_check_save_dirs_result.results
            [migrate_to_mount_index].stat.exists
       block:
         - name: Stop standard services
@@ -38,14 +41,16 @@
             - migrate_to_mount_stop_result.msg is not search("Could not find")
           loop: >-
             {{ migrate_to_mount
-               | selectatrr("service", "defined")
-               | selectatrr("service.name", "defined")
+               | selectattr("service", "defined")
+               | selectattr("service.name", "defined")
                | selectattr("service.stop_command", "undefined")
                | list  }}
           loop_control:
             loop_var: migrate_to_mount_item
-            loop_index: migrate_to_mount_index
-            label: "{{ migrate_to_mount_item.mount.path }}"
+            index_var: migrate_to_mount_index
+            label: >-
+              {{ migrate_to_mount_item.mount.path }}
+              {{ migrate_to_mount_item.service.name }}
 
         - name: Stop services with external commands
           command: "{{ migrate_to_mount_item.service.stop_command }}"
@@ -54,12 +59,12 @@
             {{ migrate_to_mount_item.service.stop_command_failed_when }}
           loop: >-
             {{ migrate_to_mount
-               | selectatrr("service", "defined")
+               | selectattr("service", "defined")
                | selectattr("service.stop_command", "defined")
                | list  }}
           loop_control:
             loop_var: migrate_to_mount_item
-            loop_index: migrate_to_mount_index
+            index_var: migrate_to_mount_index
             label: "{{ migrate_to_mount_item.mount.path }}"
 
         - name: Save directories
@@ -71,16 +76,16 @@
               + migrate_to_mount_save_suffix }}
           when:
             - >-
-              migrate_to_mount_check_dirs_result[migrate_to_mount_index]
-              .stat.exists
+              migrate_to_mount_check_dirs_result.results
+              [migrate_to_mount_index].stat.exists
             - >-
-              not migrate_to_mount_check_save_dirs_result
+              not migrate_to_mount_check_save_dirs_result.results
               [migrate_to_mount_index].stat.exists
           register: migrate_to_mount_save_result
           loop: "{{ migrate_to_mount }}"
           loop_control:
             loop_var: migrate_to_mount_item
-            loop_index: migrate_to_mount_index
+            index_var: migrate_to_mount_index
             label: "{{ migrate_to_mount_item.mount.path }}"
 
         - name: Mount directories
@@ -89,13 +94,13 @@
           loop: "{{ migrate_to_mount }}"
           loop_control:
             loop_var: migrate_to_mount_item
-            loop_index: migrate_to_mount_index
+            index_var: migrate_to_mount_index
           vars:
             mounts_load_from_hostvars: no
             mounts:
               - >-
                 {{ migrate_to_mount_item.mount
-                   | combine("state": "mounted") }}
+                   | combine({"state": "mounted"}) }}
             mounts_create_paths: yes
 
         - name: Restore saved directories
@@ -108,13 +113,14 @@
           args:
             warn: no
           when: >-
-            migrate_to_mount_save_result[migrate_to_mount_index] is changed
-            or migrate_to_mount_check_save_dirs_result[migrate_to_mount_index]
-               .stat.exists
+            migrate_to_mount_save_result.results[migrate_to_mount_index]
+            is changed
+            or migrate_to_mount_check_save_dirs_result.results
+               [migrate_to_mount_index].stat.exists
           loop: "{{ migrate_to_mount }}"
           loop_control:
             loop_var: migrate_to_mount_item
-            loop_index: migrate_to_mount_index
+            index_var: migrate_to_mount_index
 
         - name: Remove saved directories
           file:
@@ -126,7 +132,7 @@
           loop: "{{ migrate_to_mount }}"
           loop_control:
             loop_var: migrate_to_mount_item
-            loop_index: migrate_to_mount_index
+            index_var: migrate_to_mount_index
 
         - name: Start standard services
           service:
@@ -138,14 +144,16 @@
             - migrate_to_mount_start_result.msg is not search("Could not find")
           loop: >-
             {{ migrate_to_mount
-               | selectatrr("service", "defined")
-               | selectatrr("service.name", "defined")
+               | selectattr("service", "defined")
+               | selectattr("service.name", "defined")
                | selectattr("service.start_command", "undefined")
                | list  }}
           loop_control:
             loop_var: migrate_to_mount_item
-            loop_index: migrate_to_mount_index
-            label: "{{ migrate_to_mount_item.mount.path }}"
+            index_var: migrate_to_mount_index
+            label: >-
+              {{ migrate_to_mount_item.mount.path }}
+              {{ migrate_to_mount_item.service.name }}
 
         - name: Start services with external commands
           command: "{{ migrate_to_mount_item.service.start_command }}"
@@ -158,7 +166,7 @@
                | list  }}
           loop_control:
             loop_var: migrate_to_mount_item
-            loop_index: migrate_to_mount_index
+            index_var: migrate_to_mount_index
             label: "{{ migrate_to_mount_item.mount.path }}"
 
   tags:
