@@ -1,2 +1,7 @@
 ---
 # Role variables
+
+migrate_to_mount_to_manage: >-
+  {{ migrate_to_mount
+     + ((migrate_to_mount_load_from_hostvars | bool)
+      | ternary(migrate_to_mount_hostvars | default([]) | flatten, [])) }}

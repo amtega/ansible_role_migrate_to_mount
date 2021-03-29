@@ -3,5 +3,21 @@
 - name: Prepare
   hosts: molecule_hosts
   gather_facts: no
+  become: yes
   tasks:
-    - debug: msg="Preparation tasks"
+    - name: Install required packages
+      package:
+        name: httpd
+        state: present
+
+    - name: Start httpd service
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+
+    - name: Create mount directory
+      file:
+        path: /mnt/www
+        state: directory
+        mode: 0750
