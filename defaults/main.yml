@@ -23,7 +23,7 @@
 # For start_command_failed_when and stop_command_failed_when you can use
 # the variables migrate_to_mount_start_result and migrate_to_mount_stop_result
 
-migrate_to_mount: {}
+migrate_to_mount: []
 
 # Suffix to use during directory migration move tasks
 
