@@ -95,6 +95,7 @@
           loop_control:
             loop_var: migrate_to_mount_item
             index_var: migrate_to_mount_index
+            label: "{{ migrate_to_mount_item.mount.path }}"
           vars:
             mounts_load_from_hostvars: no
             mounts:
@@ -125,6 +126,7 @@
           loop_control:
             loop_var: migrate_to_mount_item
             index_var: migrate_to_mount_index
+            label: "{{ migrate_to_mount_item.mount.path }}"
 
         - name: Remove saved directories
           file:
@@ -137,6 +139,7 @@
           loop_control:
             loop_var: migrate_to_mount_item
             index_var: migrate_to_mount_index
+            label: "{{ migrate_to_mount_item.mount.path }}"
 
         - name: Start standard services
           service:
