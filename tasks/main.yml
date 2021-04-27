@@ -55,8 +55,7 @@
         - name: Stop services with external commands
           command: "{{ migrate_to_mount_item.service.stop_command }}"
           register: migrate_to_mount_stop_result
-          failed_when: >-
-            {{ migrate_to_mount_item.service.stop_command_failed_when }}
+          failed_when: migrate_to_mount_item.service.stop_command_failed_when
           loop: >-
             {{ migrate_to_mount
                | selectattr("service", "defined")
@@ -165,8 +164,7 @@
         - name: Start services with external commands
           command: "{{ migrate_to_mount_item.service.start_command }}"
           register: migrate_to_mount_start_result
-          failed_when: >-
-            {{ migrate_to_mount_item.service.start_command_failed_when }}
+          failed_when: migrate_to_mount_item.service.start_command_failed_when
           loop: >-
             {{ migrate_to_mount
                | selectattr("service.sart_command", "defined")
@@ -175,6 +173,22 @@
             loop_var: migrate_to_mount_item
             index_var: migrate_to_mount_index
             label: "{{ migrate_to_mount_item.mount.path }}"
+  vars:
+    migrate_to_mount_stop_result:
+      msg: ""
+      rc: 0
+      stderr: ""
+      stderr_lines: []
+      stdout: ""
+      stdout_lines: []
 
+    migrate_to_mount_start_result:
+      msg: ""
+      rc: 0
+      stderr: ""
+      stderr_lines: []
+      stdout: ""
+      stdout_lines: []
+            
   tags:
     - role::migrate_to_mount
