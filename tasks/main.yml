@@ -35,16 +35,18 @@
           service:
             name: "{{ migrate_to_mount_item.service.name }}"
             state: stopped
-          register: migrate_to_mount_stop_result
+          register: migrate_to_mount_stop_internal_result
           failed_when:
-            - migrate_to_mount_stop_result.msg is defined
-            - migrate_to_mount_stop_result.msg is not search("Could not find")
+            - migrate_to_mount_stop_internal_result.msg is defined
+            - >-
+              migrate_to_mount_stop_internal_result.msg
+              is not search("Could not find")
           loop: >-
             {{ migrate_to_mount
                | selectattr("service", "defined")
                | selectattr("service.name", "defined")
                | selectattr("service.stop_command", "undefined")
-               | list  }}
+               | list }}
           loop_control:
             loop_var: migrate_to_mount_item
             index_var: migrate_to_mount_index
@@ -54,14 +56,13 @@
 
         - name: Stop services with external commands
           command: "{{ migrate_to_mount_item.service.stop_command }}"
-          register: migrate_to_mount_stop_result
-          failed_when: >-
-            {{ migrate_to_mount_item.service.stop_command_failed_when }}
+          register: migrate_to_mount_stop_external_result
+          failed_when: migrate_to_mount_item.service.stop_command_failed_when
           loop: >-
             {{ migrate_to_mount
                | selectattr("service", "defined")
                | selectattr("service.stop_command", "defined")
-               | list  }}
+               | list }}
           loop_control:
             loop_var: migrate_to_mount_item
             index_var: migrate_to_mount_index
@@ -145,16 +146,18 @@
           service:
             name: "{{ migrate_to_mount_item.service.name }}"
             state: started
-          register: migrate_to_mount_start_result
+          register: migrate_to_mount_start_internal_result
           failed_when:
-            - migrate_to_mount_start_result.msg is defined
-            - migrate_to_mount_start_result.msg is not search("Could not find")
+            - migrate_to_mount_start_internal_result.msg is defined
+            - >-
+              migrate_to_mount_start_internal_result.msg
+              is not search("Could not find")
           loop: >-
             {{ migrate_to_mount
                | selectattr("service", "defined")
                | selectattr("service.name", "defined")
                | selectattr("service.start_command", "undefined")
-               | list  }}
+               | list }}
           loop_control:
             loop_var: migrate_to_mount_item
             index_var: migrate_to_mount_index
@@ -164,17 +167,45 @@
 
         - name: Start services with external commands
           command: "{{ migrate_to_mount_item.service.start_command }}"
-          register: migrate_to_mount_start_result
+          register: migrate_to_mount_start_external_result
           failed_when: >-
-            {{ migrate_to_mount_item.service.start_command_failed_when }}
+            migrate_to_mount_ greitem.service.start_command_failed_when
           loop: >-
             {{ migrate_to_mount
                | selectattr("service.sart_command", "defined")
-               | list  }}
+               | list }}
           loop_control:
             loop_var: migrate_to_mount_item
             index_var: migrate_to_mount_index
             label: "{{ migrate_to_mount_item.mount.path }}"
+  vars:
+    migrate_to_mount_stop_result_placeholder:
+      msg: ""
+      rc: 0
+      stderr: ""
+      stderr_lines: []
+      stdout: ""
+      stdout_lines: []
+
+    migrate_to_mount_start_result_placeholder:
+      msg: ""
+      rc: 0
+      stderr: ""
+      stderr_lines: []
+      stdout: ""
+      stdout_lines: []
+
+    migrate_to_mount_stop_result: >-
+      {{ (migrate_to_mount_stop_external_result is defined)
+         | ternary(migrate_to_mount_stop_external_result.results
+                   [migrate_to_mount_index] | default({}),
+                   migrate_to_mount_stop_result_placeholder) }}
+
+    migrate_to_mount_start_result: >-
+      {{ (migrate_to_mount_start_external_result is defined)
+         | ternary(migrate_to_mount_start_external_result.results
+                   [migrate_to_mount_index] | default({}),
+                   migrate_to_mount_stop_result_placeholder) }}
 
   tags:
     - role::migrate_to_mount
