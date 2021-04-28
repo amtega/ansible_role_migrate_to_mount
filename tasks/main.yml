@@ -38,7 +38,9 @@
           register: migrate_to_mount_stop_internal_result
           failed_when:
             - migrate_to_mount_stop_internal_result.msg is defined
-            - migrate_to_mount_stop_internal_result.msg is not search("Could not find")
+            - >-
+              migrate_to_mount_stop_internal_result.msg
+              is not search("Could not find")
           loop: >-
             {{ migrate_to_mount
                | selectattr("service", "defined")
@@ -147,7 +149,9 @@
           register: migrate_to_mount_start_internal_result
           failed_when:
             - migrate_to_mount_start_internal_result.msg is defined
-            - migrate_to_mount_start_internal_result.msg is not search("Could not find")
+            - >-
+              migrate_to_mount_start_internal_result.msg
+              is not search("Could not find")
           loop: >-
             {{ migrate_to_mount
                | selectattr("service", "defined")
@@ -164,7 +168,8 @@
         - name: Start services with external commands
           command: "{{ migrate_to_mount_item.service.start_command }}"
           register: migrate_to_mount_start_external_result
-          failed_when: migrate_to_mount_ greitem.service.start_command_failed_when
+          failed_when: >-
+            migrate_to_mount_ greitem.service.start_command_failed_when
           loop: >-
             {{ migrate_to_mount
                | selectattr("service.sart_command", "defined")
