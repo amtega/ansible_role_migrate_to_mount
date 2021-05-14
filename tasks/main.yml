@@ -108,13 +108,14 @@
         - name: Restore saved directories
           shell: >-
             shopt -s dotglob ; \
-            if [ -e {{ migrate_to_mount_item.mount.path
-                       + "."
-                       + migrate_to_mount_save_suffix }}/* ]; then \
+            if [ "$( ls -A {{ migrate_to_mount_item.mount.path
+                       + '.'
+                       + migrate_to_mount_save_suffix }} )" ]; then \
             mv {{ migrate_to_mount_item.mount.path
                   + "."
                   + migrate_to_mount_save_suffix }}/* \
             {{ migrate_to_mount_item.mount.path }} ; \
+            else echo "dir empty"; \
             fi
           args:
             warn: no
