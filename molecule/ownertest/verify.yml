@@ -1,0 +1,50 @@
+---
+
+- name: Verify
+  hosts: molecule_hosts
+  gather_facts: yes
+  become: yes
+  tasks:
+    - name: Get service facts
+      service_facts:
+
+    - name: Check directories
+      stat:
+        path: "{{ item }}"
+      register: check_dirs_result
+      loop:
+        - /var/www/html
+
+    - name: Verify migration was ok
+      assert:
+        that:
+          - ansible_facts.services["httpd.service"]["state"] == "running"
+          - >-
+            check_dirs_result.results
+            | selectattr("stat.exists", "equalto", true)
+            | selectattr("stat.isdir", "equalto", true)
+            | list
+          - >-
+            ansible_facts.mounts
+            | selectattr("device", "equalto", "/dev/mapper/vgtesting-lvtest")
+            | selectattr("mount", "equalto", "/var/www")
+            | list
+
+    - name: Check mount point permissions
+      stat:
+        path: "{{ item }}"
+      register: check_mount_dirs_result
+      loop:
+        - /var/www
+        - /var/www/html
+
+    - name: Verify permissions are ok
+      assert:
+        that:
+          - >-
+            check_mount_dirs_result.results
+            | selectattr("stat.exists", "equalto", true)
+            | selectattr("stat.isdir", "equalto", true)
+            | selectattr("stat.pw_name", "equalto", "apache")
+            | list
+            | length == 2
