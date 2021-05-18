@@ -1,0 +1,75 @@
+---
+
+- name: Prepare
+  hosts: molecule_hosts
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Setup LVM physical volume
+      include_role:
+        name: amtega.parted
+      vars:
+        parted_disks:
+          - align: optimal
+            device: /dev/sdb
+            number: 1
+            part_type: primary
+            part_start: 0%
+            part_end: 100%
+            flags: [ lvm ]
+            state: present
+
+    - name: Create vg
+      include_role:
+        name: amtega.lvm_vg
+      vars:
+        lvm_vg:
+          - vg: vgtesting
+            pvs: /dev/sdb1
+            pesize: "4"
+            state: present
+
+    - name: Create lv
+      include_role:
+        name: amtega.lvm_lv
+      vars:
+        lvm_lv:
+          - vg: vgtesting
+            lv: lvtest
+            size: 512M
+
+    - name: create filesystem
+      include_role:
+        name: amtega.filesystem
+      vars:
+        filesystem_fs:
+          - dev: /dev/mapper/vgtesting-lvtest
+            fstype: xfs
+            resizefs: yes
+
+    - name: Install required packages
+      package:
+        name: httpd
+        state: present
+
+    - name: Start httpd service
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+
+    - name: Adjust mount dir owner
+      file:
+        path: /var/www
+        state: directory
+        owner: apache
+        group: apache
+        mode: 0755
+
+    - name: Adjust docroot property
+      file:
+        path: /var/www/html
+        state: directory
+        owner: apache
+        group: apache
+        mode: 0755
