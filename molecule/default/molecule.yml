@@ -2,11 +2,19 @@
 
 dependency:
   name: galaxy
+  enabled: yes
+  options:
+    ignore-certs: yes
+    ignore-errors: yes
+    role-file: >-
+      ${MOLECULE_SCENARIO_DIRECTORY}/../resources/requirements.yml
+    requirements-file: >-
+      ${MOLECULE_SCENARIO_DIRECTORY}/../resources/requirements.yml
 driver:
   name: vagrant
   provider:
     name: virtualbox
-lint: "${MOLECULE_SCENARIO_DIRECTORY}/linters.sh"
+lint: "${MOLECULE_SCENARIO_DIRECTORY}/../resources/linters.sh"
 platforms:
   - name: "centos7-${INSTANCE_UUID:-1}"
     box: centos/7
@@ -38,6 +46,10 @@ platforms:
       - molecule_hosts_fedora_33
 provisioner:
   name: ansible
+  playbooks:
+    converge: ../resources/converge.yml
+    cleanup: ../resources/cleanup.yml
+    side_effect: ../resources/side_effect.yml
   config_options:
     defaults:
       callback_whitelist: profile_tasks
