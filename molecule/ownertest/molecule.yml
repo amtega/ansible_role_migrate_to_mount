@@ -1,0 +1,74 @@
+---
+
+dependency:
+  name: galaxy
+driver:
+  name: vagrant
+lint: "${MOLECULE_SCENARIO_DIRECTORY}/linters.sh"
+platforms:
+  - name: "centos7-${INSTANCE_UUID:-1}"
+    box: centos/7
+    provider_raw_config_args:
+      - "customize
+         ['createhd',
+          '--filename', 'extradisk_centos_7.vdi',
+          '--size', 1024]"
+      - "customize
+         ['storageattach', :id,
+          '--storagectl', 'IDE',
+          '--port', 1,
+          '--device', 1,
+          '--type', 'hdd',
+          '--medium', 'extradisk_centos_7.vdi']"
+    memory: 2048
+    groups:
+      - molecule_hosts
+      - molecule_hosts_centos
+      - molecule_hosts_centos_7
+
+  - name: "centos8-${INSTANCE_UUID:-1}"
+    box: centos/8
+    provider_raw_config_args:
+      - "customize
+         ['createhd',
+          '--filename', 'extradisk_centos_8.vdi',
+          '--size', 1024]"
+      - "customize
+         ['storageattach', :id,
+          '--storagectl', 'IDE',
+          '--port', 1,
+          '--device', 1,
+          '--type', 'hdd',
+          '--medium', 'extradisk_centos_8.vdi']"
+    memory: 2048
+    groups:
+      - molecule_hosts
+      - molecule_hosts_centos
+      - molecule_hosts_centos_8
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      callback_whitelist: profile_tasks
+      action_plugins: $PWD/action_plugins
+  inventory:
+    hosts:
+      molecule_hosts:
+        vars:
+          migrate_to_mount:
+            - mount:
+                path: /var/www
+                src: /dev/mapper/vgtesting-lvtest
+                opts: 'context="system_u:object_r:httpd_sys_content_t:s0"'
+                owner: apache
+                group: apache
+                mode: "0755"
+                fstype: xfs
+              service:
+                name: httpd
+      molecule_hosts_fedora:
+        vars:
+          ansible_python_interpreter: /usr/bin/python3
+verifier:
+  name: ansible
