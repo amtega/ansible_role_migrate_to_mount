@@ -35,9 +35,8 @@ platforms:
       - molecule_hosts
       - molecule_hosts_centos
       - molecule_hosts_centos_7
-
   - name: "centos8-${INSTANCE_UUID:-1}"
-    box: centos/8
+    box: centos/stream8
     provider_raw_config_args:
       - "customize
          ['createhd',
@@ -55,7 +54,44 @@ platforms:
       - molecule_hosts
       - molecule_hosts_centos
       - molecule_hosts_centos_8
-
+  - name: "fedora34-${INSTANCE_UUID:-1}"
+    box: fedora/34-cloud-base
+    provider_raw_config_args:
+      - "customize
+         ['createhd',
+          '--filename', 'extradisk_centos_8.vdi',
+          '--size', 1024]"
+      - "customize
+         ['storageattach', :id,
+          '--storagectl', 'IDE',
+          '--port', 1,
+          '--device', 1,
+          '--type', 'hdd',
+          '--medium', 'extradisk_centos_8.vdi']"
+    memory: 2048
+    groups:
+      - molecule_hosts
+      - molecule_hosts_centos
+      - molecule_hosts_fedora_34
+  - name: "fedora35-${INSTANCE_UUID:-1}"
+    box: fedora/35-cloud-base
+    provider_raw_config_args:
+      - "customize
+         ['createhd',
+          '--filename', 'extradisk_centos_8.vdi',
+          '--size', 1024]"
+      - "customize
+         ['storageattach', :id,
+          '--storagectl', 'IDE',
+          '--port', 1,
+          '--device', 1,
+          '--type', 'hdd',
+          '--medium', 'extradisk_centos_8.vdi']"
+    memory: 2048
+    groups:
+      - molecule_hosts
+      - molecule_hosts_centos
+      - molecule_hosts_fedora_35
 provisioner:
   name: ansible
   playbooks:
@@ -64,7 +100,7 @@ provisioner:
     side_effect: ../resources/side_effect.yml
   config_options:
     defaults:
-      callback_whitelist: profile_tasks
+      callbacks_enabled: profile_tasks
       action_plugins: $PWD/action_plugins
   inventory:
     hosts:
