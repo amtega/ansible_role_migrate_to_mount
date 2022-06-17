@@ -40,9 +40,9 @@
 
     - name: create filesystem
       include_role:
-        name: amtega.filesystem
+        name: amtega.filesystems
       vars:
-        filesystem_fs:
+        filesystems:
           - dev: /dev/mapper/vgtesting-lvtest
             fstype: xfs
             resizefs: yes
