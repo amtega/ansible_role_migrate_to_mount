@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2022-02-17
+### Changed
+- Migrated to new amtega.filesystems role. Related to ansible/roles/amtega.filesystem#1
+
 ## [1.1.0] - 2022-02-17
 ### Changed
 - Supported distros. Related to ansible/main#263
