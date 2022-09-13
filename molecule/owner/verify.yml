@@ -6,17 +6,17 @@
   become: yes
   tasks:
     - name: Get service facts
-      service_facts:
+      ansible.builtin.service_facts:
 
     - name: Check directories
-      stat:
+      ansible.builtin.stat:
         path: "{{ item }}"
       register: check_dirs_result
       loop:
         - /var/www/html
 
     - name: Verify migration was ok
-      assert:
+      ansible.builtin.assert:
         that:
           - ansible_facts.services["httpd.service"]["state"] == "running"
           - >-
@@ -31,7 +31,7 @@
             | list
 
     - name: Check mount point permissions
-      stat:
+      ansible.builtin.stat:
         path: "{{ item }}"
       register: check_mount_dirs_result
       loop:
@@ -39,7 +39,7 @@
         - /var/www/html
 
     - name: Verify permissions are ok
-      assert:
+      ansible.builtin.assert:
         that:
           - >-
             check_mount_dirs_result.results
