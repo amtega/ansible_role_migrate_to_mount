@@ -6,7 +6,7 @@
   become: yes
   tasks:
     - name: Setup LVM physical volume
-      include_role:
+      ansible.builtin.include_role:
         name: amtega.parted
       vars:
         parted_disks:
@@ -20,7 +20,7 @@
             state: present
 
     - name: Create vg
-      include_role:
+      ansible.builtin.include_role:
         name: amtega.lvm_vg
       vars:
         lvm_vg:
@@ -30,7 +30,7 @@
             state: present
 
     - name: Create lv
-      include_role:
+      ansible.builtin.include_role:
         name: amtega.lvm_lv
       vars:
         lvm_lv:
@@ -38,8 +38,8 @@
             lv: lvtest
             size: 512M
 
-    - name: create filesystem
-      include_role:
+    - name: Create filesystem
+      ansible.builtin.include_role:
         name: amtega.filesystems
       vars:
         filesystems:
@@ -48,18 +48,18 @@
             resizefs: yes
 
     - name: Install required packages
-      package:
+      ansible.builtin.package:
         name: httpd
         state: present
 
     - name: Start httpd service
-      service:
+      ansible.builtin.service:
         name: httpd
         state: started
         enabled: yes
 
     - name: Adjust mount dir owner
-      file:
+      ansible.builtin.file:
         path: /var/www
         state: directory
         owner: apache
@@ -67,7 +67,7 @@
         mode: 0755
 
     - name: Adjust docroot property
-      file:
+      ansible.builtin.file:
         path: /var/www/html
         state: directory
         owner: apache
