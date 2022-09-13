@@ -1,9 +1,9 @@
 ---
-# Role tasks
 
-- block:
+- name: Migrate directory to mount
+  block:
     - name: Check directories
-      stat:
+      ansible.builtin.stat:
         path: "{{ migrate_to_mount_item.mount.path }}"
       register: migrate_to_mount_check_dirs_result
       loop: "{{ migrate_to_mount }}"
@@ -12,7 +12,7 @@
         label: "{{ migrate_to_mount_item.mount.path }}"
 
     - name: Check save directories
-      stat:
+      ansible.builtin.stat:
         path: >-
           {{ migrate_to_mount_item.mount.path
              + "."
@@ -32,7 +32,7 @@
            [migrate_to_mount_index].stat.exists
       block:
         - name: Stop standard services
-          service:
+          ansible.builtin.service:
             name: "{{ migrate_to_mount_item.service.name }}"
             state: stopped
           register: migrate_to_mount_stop_internal_result
@@ -55,9 +55,11 @@
               {{ migrate_to_mount_item.service.name }}
 
         - name: Stop services with external commands
-          command: "{{ migrate_to_mount_item.service.stop_command }}"
+          ansible.builtin.command: >-
+            {{ migrate_to_mount_item.service.stop_ansible.builtin.command }}
           register: migrate_to_mount_stop_external_result
           failed_when: migrate_to_mount_item.service.stop_command_failed_when
+          changed_when: yes
           loop: >-
             {{ migrate_to_mount
                | selectattr("service", "defined")
@@ -69,7 +71,7 @@
             label: "{{ migrate_to_mount_item.mount.path }}"
 
         - name: Save directories
-          command: >-
+          ansible.builtin.command: >-
             mv
             {{ migrate_to_mount_item.mount.path }}
             {{ migrate_to_mount_item.mount.path
@@ -90,7 +92,7 @@
             label: "{{ migrate_to_mount_item.mount.path }}"
 
         - name: Mount directories
-          include_role:
+          ansible.builtin.include_role:
             name: amtega.mounts
           loop: "{{ migrate_to_mount }}"
           loop_control:
@@ -106,7 +108,7 @@
             mounts_create_paths: yes
 
         - name: Restore saved directories
-          shell: >-
+          ansible.builtin.shell: >-
             shopt -s dotglob ; \
             if [ "$( ls -A {{ migrate_to_mount_item.mount.path
                        + '.'
@@ -131,7 +133,7 @@
             label: "{{ migrate_to_mount_item.mount.path }}"
 
         - name: Remove saved directories
-          file:
+          ansible.builtin.file:
             path: >-
               {{ migrate_to_mount_item.mount.path
                  + "."
@@ -144,7 +146,7 @@
             label: "{{ migrate_to_mount_item.mount.path }}"
 
         - name: Start standard services
-          service:
+          ansible.builtin.service:
             name: "{{ migrate_to_mount_item.service.name }}"
             state: started
           register: migrate_to_mount_start_internal_result
@@ -167,10 +169,12 @@
               {{ migrate_to_mount_item.service.name }}
 
         - name: Start services with external commands
-          command: "{{ migrate_to_mount_item.service.start_command }}"
+          ansible.builtin.command: >-
+            {{ migrate_to_mount_item.service.start_ansible.builtin.command }}
           register: migrate_to_mount_start_external_result
           failed_when: >-
             migrate_to_mount_ greitem.service.start_command_failed_when
+          changed_when: yes
           loop: >-
             {{ migrate_to_mount
                | selectattr("service.sart_command", "defined")
